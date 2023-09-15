@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8" />
+
+    <!-- Reference to the Bing Maps SDK -->
+    <script type='text/javascript'
+            src='http://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=AsLduLX9WIqQO-oHtTes1AvqXTxN4DXe5NGO2Mp7sSM9I9Z3mBQcV3ygnTG7ciRt' 
+            async defer></script>
+    
+    <!-- <script type='text/javascript'>
+    function GetMap()
+    {
+        var map = new Microsoft.Maps.Map('#myMap', {
+            center: new Microsoft.Maps.Location(51.50632, -0.12714),
+            mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+            zoom: 10
+        });
+        
+
+        //Add your post map load code here.
+    }
+    </script> -->
+    <script type="text/javascript" src="index.js" defer>  </script>
+    
+</head>
+<body id = "content">
+    <div id="myMap" style="position:relative;width:600px;height:400px;"></div>
+    <button id="GoToRomeButton">Go to Rome</button>
+
+    <div class="directionsContainer">
+        <div id="directionsPanel"></div>
+        <div id="directionsItinerary"></div>
+    </div>
+    <!-- <script type="text/javascript" defer> 
+        var centerButton = document.getElementById("centerButton");
+        centerButton.addEventListener("click", function() {
+                map.setView({ center: new Microsoft.Maps.Location(41.9028, 12.4964) });
+            });
+        
+    </script> -->
+</body>
+
+</html>
