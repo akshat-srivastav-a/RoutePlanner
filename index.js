@@ -22,6 +22,7 @@
 //   // Call the loadMapScenario function to load the Bing Maps API script
 //   loadMapScenario();
 
+const API_KEY = "";
 var map;
 
 function GetMap(){
@@ -66,8 +67,7 @@ function GetMap(){
 
 var centerButton = document.getElementById("GoToRomeButton");
 centerButton.addEventListener("click", function() {
-    // map.setView({ center: new Microsoft.Maps.Location(41.9028, 12.4964) });
-    addPin();
+    map.setView({ center: new Microsoft.Maps.Location(41.9028, 12.4964) });
 });
 
 function addPin(){
@@ -76,7 +76,7 @@ function addPin(){
 }
 
 function getElevation(latitude, longitude) {
-    var requestUrl = "https://dev.virtualearth.net/REST/v1/Elevation/List?points=" + latitude + "," + longitude + "&key=AsLduLX9WIqQO-oHtTes1AvqXTxN4DXe5NGO2Mp7sSM9I9Z3mBQcV3ygnTG7ciRt";
+    var requestUrl = "https://dev.virtualearth.net/REST/v1/Elevation/List?points=" + latitude + "," + longitude + "&key=" + API_KEY;
 
     // var elevation = 0.0;
     //Send the request to the Bing Maps REST Elevation API.
@@ -242,7 +242,7 @@ async function calculateRouteDistanceSync(){
 
 function getElevations(locations) {
     //Construct a request URL for the Bing Maps REST Elevation API.
-    var requestUrl = "https://dev.virtualearth.net/REST/v1/Elevation/List?points=" + locations.map(loc => loc[0] + "," + loc[1]).join(',') + "&key=AsLduLX9WIqQO-oHtTes1AvqXTxN4DXe5NGO2Mp7sSM9I9Z3mBQcV3ygnTG7ciRt";
+    var requestUrl = "https://dev.virtualearth.net/REST/v1/Elevation/List?points=" + locations.map(loc => loc[0] + "," + loc[1]).join(',') + "&key=" + API_KEY;
 
     //Send the request to the Bing Maps REST Elevation API.
     return fetch(requestUrl)
@@ -343,7 +343,7 @@ async function calculateRoute(starting_latitude,starting_longitude,target_elevat
 
 function getRoute(start, end) {
     //Construct a request URL for the Bing Maps REST Route API.
-    var requestUrl = "https://dev.virtualearth.net/REST/v1/Routes/Driving?wp.0=" + start.latitude + "," + start.longitude + "&wp.1=" + end.latitude + "," + end.longitude + "&key=AsLduLX9WIqQO-oHtTes1AvqXTxN4DXe5NGO2Mp7sSM9I9Z3mBQcV3ygnTG7ciRt&ra=routePath";
+    var requestUrl = "https://dev.virtualearth.net/REST/v1/Routes/Driving?wp.0=" + start.latitude + "," + start.longitude + "&wp.1=" + end.latitude + "," + end.longitude + "&key="+API_KEY;
 
     return fetch(requestUrl)
         .then(response => response.json())
