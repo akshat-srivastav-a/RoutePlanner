@@ -99,6 +99,8 @@ function displayRoute(coordinates) {
         //Create an instance of the directions manager.
         var directionsManager = new Microsoft.Maps.Directions.DirectionsManager(map);
 
+        directionsManager.clearAll();
+
         //Create waypoints from the coordinates array.
         for (var i = 0; i < coordinates.length; i++) {
             var waypoint = new Microsoft.Maps.Directions.Waypoint({
@@ -271,6 +273,21 @@ function randomizedPoints(point,prev_bearing){
     return [points,bearings];
 }
 
+function deterministicPoints(point,prev_bearing){
+    let num_points = 5;
+    let bearing_range = 180;
+    let bearing = prev_bearing;
+    let points = [];
+    let bearings = []
+    for (let i = 0; i < num_points; i++){
+        bearing = bearing + (bearing_range/num_points)*(i - num_points/2);
+        bearings.push(bearing);
+        points.push(getNextPoint(point,bearing));
+    }
+
+    return [points,bearings];
+}
+
 function getNextPoint(point,bearing){
     currentLatitude = point[0];
     currentLongitude = point[1];
@@ -294,7 +311,7 @@ async function calculateRoute(starting_latitude,starting_longitude,target_elevat
 
     while(currentDistance < target_distance){
         let nextPointCandidates,bearings;
-        [nextPointCandidates,bearings] = randomizedPoints(currentPoint,prev_bearing);
+        [nextPointCandidates,bearings] = deterministicPoints(currentPoint,prev_bearing);
         let targetGradientUp = Math.max(0,(target_elevation_gain - totalElevationGain) / (target_distance - currentDistance));
         let targetGradientDown = Math.max(0,(target_elevation_loss - totalElevationLoss) / (target_distance - currentDistance));
         console.log(targetGradientUp,targetGradientDown)
@@ -370,8 +387,10 @@ function getRoute(start, end) {
 function getBestSegment(distances,elevations,targetGradientUp,targetGradientDown){
     var bestSegment = 0;
     var bestScore = -Infinity;
+    let lambda = 0.5;
     for(var i = 0; i < distances.length; i++){
         var score = -1*( Math.abs(targetGradientUp - Math.max(0,elevations[i]) / distances[i]) + Math.abs(targetGradientDown - Math.max(0,-elevations[i]) / distances[i]));
+        score = score + score*lambda*distances[i];
         if(score > bestScore){
             bestScore = score;
             bestSegment = i;
