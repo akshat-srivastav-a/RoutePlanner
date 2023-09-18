@@ -22,8 +22,10 @@
 //   // Call the loadMapScenario function to load the Bing Maps API script
 //   loadMapScenario();
 
-const API_KEY = "";
+const API_KEY = "AsLduLX9WIqQO-oHtTes1AvqXTxN4DXe5NGO2Mp7sSM9I9Z3mBQcV3ygnTG7ciRt";
 var map;
+
+var directionsManager = null;
 
 function GetMap(){
     map = new Microsoft.Maps.Map('#myMap', {
@@ -31,44 +33,13 @@ function GetMap(){
         mapTypeId: Microsoft.Maps.MapTypeId.aerial,
         zoom: 10
     });
-    //Add your post map load code here.
-    //Load the directions module.
-    Microsoft.Maps.loadModule('Microsoft.Maps.Directions', function () {
-        //Create an instance of the directions manager.
-        directionsManager = new Microsoft.Maps.Directions.DirectionsManager(map);
-
-        //Create waypoints to route between.
-        directionsManager.addWaypoint(new Microsoft.Maps.Directions.Waypoint({ address: 'London, UK' }));
-        directionsManager.addWaypoint(new Microsoft.Maps.Directions.Waypoint({ address: 'Paris, FR' }));
-        directionsManager.addWaypoint(new Microsoft.Maps.Directions.Waypoint({ address: 'Madrid, ES' }));
-
-        //Set the request options that avoid highways and uses kilometers.
-        directionsManager.setRequestOptions({
-            distanceUnit: Microsoft.Maps.Directions.DistanceUnit.km,
-            routeAvoidance: [Microsoft.Maps.Directions.RouteAvoidance.avoidLimitedAccessHighway]
-        });
-
-        //Make the route line thick and green. Replace the title of waypoints with an empty string to hide the default text that appears.
-        directionsManager.setRenderOptions({
-            drivingPolylineOptions: {
-                strokeColor: 'green',
-                strokeThickness: 6
-            },
-            waypointPushpinOptions: {
-                title: ''
-            }
-        });
-
-        //Calculate directions.
-        directionsManager.calculateDirections();
-    });
 }
 
 
-var centerButton = document.getElementById("GoToRomeButton");
-centerButton.addEventListener("click", function() {
-    map.setView({ center: new Microsoft.Maps.Location(41.9028, 12.4964) });
-});
+// var centerButton = document.getElementById("GoToRomeButton");
+// centerButton.addEventListener("click", function() {
+//     map.setView({ center: new Microsoft.Maps.Location(41.9028, 12.4964) });
+// });
 
 function addPin(){
     var pin = new Microsoft.Maps.Pushpin(map.getCenter(), null);
@@ -93,11 +64,18 @@ function getElevation(latitude, longitude) {
 
 }
 
+function getDirectionsManager(){
+    if(directionsManager == null){
+        directionsManager = new Microsoft.Maps.Directions.DirectionsManager(map);
+    }
+    return directionsManager;
+}
+
 function displayRoute(coordinates) {
     //Load the directions module.
     Microsoft.Maps.loadModule('Microsoft.Maps.Directions', function () {
         //Create an instance of the directions manager.
-        var directionsManager = new Microsoft.Maps.Directions.DirectionsManager(map);
+        var directionsManager = getDirectionsManager();
 
         directionsManager.clearAll();
 
@@ -108,6 +86,8 @@ function displayRoute(coordinates) {
             });
             directionsManager.addWaypoint(waypoint);
         }
+
+
 
         //Set the request options that avoid highways and uses kilometers.
         directionsManager.setRequestOptions({
@@ -125,6 +105,8 @@ function displayRoute(coordinates) {
                 title: ''
             }
         });
+
+        directionsManager.setRenderOptions({ itineraryContainer: '#directionsItinerary' });
 
         //Calculate directions.
         directionsManager.calculateDirections();
@@ -298,7 +280,7 @@ function getNextPoint(point,bearing){
     ];
 }
 
-async function calculateRoute(starting_latitude,starting_longitude,target_elevation_gain,target_elevation_loss,target_distance){
+async function calculateRoute(starting_latitude,starting_longitude,target_elevation_gain,target_elevation_loss,target_distance,nextPointsFunction=deterministicPoints){
     target_distance = Math.min(30,target_distance)
     let currentDistance = 0;
     let currentPoint = [starting_latitude,starting_longitude];
@@ -311,7 +293,7 @@ async function calculateRoute(starting_latitude,starting_longitude,target_elevat
 
     while(currentDistance < target_distance){
         let nextPointCandidates,bearings;
-        [nextPointCandidates,bearings] = deterministicPoints(currentPoint,prev_bearing);
+        [nextPointCandidates,bearings] = nextPointsFunction(currentPoint,prev_bearing);
         let targetGradientUp = Math.max(0,(target_elevation_gain - totalElevationGain) / (target_distance - currentDistance));
         let targetGradientDown = Math.max(0,(target_elevation_loss - totalElevationLoss) / (target_distance - currentDistance));
         console.log(targetGradientUp,targetGradientDown)
@@ -346,6 +328,7 @@ async function calculateRoute(starting_latitude,starting_longitude,target_elevat
         totalElevationGain += Math.max(0,elevations[bestSegment]);
         totalElevationLoss += -1*Math.min(0,elevations[bestSegment]);
         prev_bearing = bearings[bestSegment];
+        currentPoint = nextPointCandidates[bestSegment];
         
         points.push(nextPointCandidates[bestSegment])
 
@@ -356,6 +339,11 @@ async function calculateRoute(starting_latitude,starting_longitude,target_elevat
 
     }
     displayRoute(points)
+    displayRouteParameters({
+        'routeDistance': currentDistance,
+        'elevationGain': totalElevationGain,
+        'elevationLoss': totalElevationLoss
+    })
 }
 
 function getRoute(start, end) {
@@ -399,3 +387,49 @@ function getBestSegment(distances,elevations,targetGradientUp,targetGradientDown
     return bestSegment;
 }
 // function that takes an array of lat 
+
+document.getElementById("submitBtn").addEventListener("click", async function() {
+    var starting_latitude = parseFloat(document.getElementById("startingLatitude").value);
+    var starting_longitude = parseFloat(document.getElementById("startingLongitude").value);
+    var target_distance = parseFloat(document.getElementById("targetDistance").value);
+    var target_elevation_gain = parseFloat(document.getElementById("targetElevationUp").value);
+    var target_elevation_loss = parseFloat(document.getElementById("targetElevationDown").value);
+    hideForm();
+    createLoadingAnimation();
+    await calculateRoute(starting_latitude,starting_longitude,target_elevation_gain,target_elevation_loss,target_distance);
+    deleteLoadingAnimation();
+});
+
+function createLoadingAnimation() {
+    let loadingAnimationContainer = document.getElementById("loadingAnimationContainer");
+    loadingAnimationContainer.innerHTML = `<div class="spinner-border text-primary" role="status" style="width: 5rem; height: 5rem;">
+    <span class="sr-only">Loading...</span></div>`
+}
+
+function displayRouteParameters(routeParameters) {
+    var routeParametersContainer = document.getElementById("routeParametersContainer");
+    routeParametersContainer.innerHTML = `
+    <div class="card" style="width: 18rem;">
+        <div class="card-body">
+            <h5 class="card-title">Route Parameters</h5>
+            <p class="card-text">Distance: ${routeParameters.routeDistance.toFixed(2)} km</p>
+            <p class="card-text">Elevation Gain: ${routeParameters.elevationGain} meters</p>
+            <p class="card-text">Elevation Loss: ${routeParameters.elevationLoss} meters</p>
+        </div>
+    </div>
+    `
+}
+
+function deleteLoadingAnimation() {
+    var container = document.getElementById("loadingAnimationContainer");
+    container.remove();
+}
+
+
+function hideForm() {
+    var formGroups = document.querySelectorAll(".form-group");
+    for (var i = 0; i < formGroups.length; i++) {
+      formGroups[i].style.display = "none";
+    }
+    document.getElementById("submitBtn").style.display = "none";
+  }
