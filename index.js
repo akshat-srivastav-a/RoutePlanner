@@ -22,7 +22,7 @@
 //   // Call the loadMapScenario function to load the Bing Maps API script
 //   loadMapScenario();
 
-const API_KEY = "AsLduLX9WIqQO-oHtTes1AvqXTxN4DXe5NGO2Mp7sSM9I9Z3mBQcV3ygnTG7ciRt";
+const API_KEY = "";
 var map;
 
 var directionsManager = null;
