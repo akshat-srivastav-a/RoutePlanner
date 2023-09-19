@@ -8,5 +8,7 @@
             async defer></script>'
   paste your key
 - Open index.html in a browser
+
+## Optional
 - In the console run calculateRoute(17.434940, 78.476239,30,10,10) to get a sample route around Necklace Road
 - Try out with other variations calculateRoute(start_latitude,start_longitude,elevation_gain_in_meters,elevation_loss_in_meters,target_distance)
